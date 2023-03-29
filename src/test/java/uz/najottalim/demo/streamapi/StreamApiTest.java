@@ -72,6 +72,10 @@ public class StreamApiTest {
         orders.forEach(order -> {
             Set<Product> products = order.getProducts();
         });
+        Set<Order> mySolution = orders.stream()
+                .filter(order -> order.getProducts().equals("Baby"))
+                .collect(Collectors.toSet());
+        Assertions.assertEquals(expected,mySolution);
         //yordam 2: demak har bitta Orderni filter qilib, keyin har bitta
         // orderga tegishli produktlarni olib agar shu Produktni setni
         // ichidagi istalgan produktni kategorisi "Baby" bo'sa unda uni filterdan o'tqizab
@@ -92,7 +96,16 @@ public class StreamApiTest {
 //         yordam: filter qilgandan song yangi produkt oching, chunki 10% diskount bilan
 //        produkt qaytarilishi kerak
 //        List<Product> yourSolution = productRepo.findAll().stream().filter()...
+            List<Product> yourSolution = productRepo.findAll();
+            List<Product> mySolution = (List<Product>) yourSolution.stream()
+                    .filter(product -> product.getCategory().equalsIgnoreCase("Toys"))
+                    .map((product) -> {
+                        product.setPrice(salary(product.getPrice()));
+                        return product;
+                    })
+                    .collect(Collectors.toList());
 
+            Assertions.assertEquals(expected,mySolution);
 //         pastdagi qator kommentdan ochilsin va method run qilinsin
 //         yourSolution list yaratilgandan keyin
 //        Assertions.assertEquals(expected, mySolution);
@@ -105,6 +118,13 @@ public class StreamApiTest {
             "Orderlarni chiqaring")
     public void exercise4_1() {
         List<Order> expected = solution4_1();
+        List <Order> mySolution =  orderRepo.findAll();
+        Set <Order> mineSolution = mySolution.stream()
+                .filter(order -> order.getCustomer().getTier()==2)
+                .filter(order -> order.getOrderDate().isBefore(LocalDate.of(2021,2,1)))
+                .filter(order -> order.getOrderDate().isAfter(LocalDate.of(2021,4,1)))
+                .collect(Collectors.toSet());
+        Assertions.assertEquals(expected,mineSolution);
         // yordam:
         // shu oraliqdagi zakazlarni olib
         // zakaz qilgan customerni tier boyicha filter qilib
@@ -117,6 +137,12 @@ public class StreamApiTest {
             "Orderlarni chiqaring")
     public void exercise4_2() {
         List<String> expected = solution4_2();
+        List<Order> orders = orderRepo.findAll();
+        List <Order> mySolution = (List<Order>) orders.stream()
+                .filter(order -> order.getStatus().equalsIgnoreCase("NEW"))
+                .map(order -> order.getCustomer().getName());
+        Assertions.assertEquals(expected,mySolution);
+
         // yordam:
         // birinchi filter keyn map order.getCustomer qilib
         // customerlarni olsa boladi
@@ -139,6 +165,12 @@ public class StreamApiTest {
             "Feb 2021 zakaz qilingan produktlar narxini hisoblang")
     public void exercise8() {
         double expected = solution8();
+        List<Order> orders = (List<Order>) orderRepo.findAll()
+                .stream()
+                .filter(order -> order.getOrderDate().isBefore(LocalDate.of(2021,2,1)))
+                .filter(order -> order.getOrderDate().isBefore(LocalDate.of(2021,3,1)))
+                .map(order -> order.getProducts().stream()
+                        .mapToDouble(Product::getPrice).sum());
         // yordam: birinchi shu sanadagi hamma orderni olib
         // keyn har bir orderni produktlarini listga yiging
         // keyn narximi stream sum bilan hisoblang
@@ -150,6 +182,12 @@ public class StreamApiTest {
             "\"Books\" category bo'lgan produktlarni summary statistikasini oling")
     public void exercise10() {
         DoubleSummaryStatistics expected = solution10();
+        DoubleSummaryStatistics statistics = (DoubleSummaryStatistics) productRepo.findAll()
+                .stream()
+                .filter(product -> product.getCategory().equalsIgnoreCase("Books"))
+                .mapToDouble(Product::getPrice)
+                .summaryStatistics();
+
         // yordam: produktni kategoriya boyicha filter qiling
         // keyn streamdan DoubleStreamga o'ting va
         // summary statisticsni chiqaring
@@ -701,5 +739,10 @@ public class StreamApiTest {
         log.info(String.format("exercise 15a - execution time: %1$d ms", (endTime - startTime)));
         log.info(result.toString());
         return result;
+
+    }
+    private static Double salary (Double s){
+        Double sum = s-(s*10/100);
+        return  sum;
     }
 }
