@@ -119,11 +119,11 @@ public class StreamApiTest {
     public void exercise4_1() {
         List<Order> expected = solution4_1();
         List <Order> mySolution =  orderRepo.findAll();
-        Set <Order> mineSolution = mySolution.stream()
+        List <Order> mineSolution = mySolution.stream()
                 .filter(order -> order.getCustomer().getTier()==2)
-                .filter(order -> order.getOrderDate().isBefore(LocalDate.of(2021,2,1)))
-                .filter(order -> order.getOrderDate().isAfter(LocalDate.of(2021,4,1)))
-                .collect(Collectors.toSet());
+                .filter(order -> order.getOrderDate().isAfter(LocalDate.of(2021,2,1)))
+                .filter(order -> order.getOrderDate().isBefore(LocalDate.of(2021,4,1)))
+                .collect(Collectors.toList());
         Assertions.assertEquals(expected,mineSolution);
         // yordam:
         // shu oraliqdagi zakazlarni olib
@@ -137,11 +137,12 @@ public class StreamApiTest {
             "Orderlarni chiqaring")
     public void exercise4_2() {
         List<String> expected = solution4_2();
-        List<Order> orders = orderRepo.findAll();
-        List <Order> mySolution = (List<Order>) orders.stream()
+        List<String> orders = orderRepo.findAll()
+                .stream()
                 .filter(order -> order.getStatus().equalsIgnoreCase("NEW"))
-                .map(order -> order.getCustomer().getName());
-        Assertions.assertEquals(expected,mySolution);
+                .map(order -> order.getCustomer().getName())
+                .collect(Collectors.toList());
+        Assertions.assertEquals(expected,orders);
 
         // yordam:
         // birinchi filter keyn map order.getCustomer qilib
@@ -154,6 +155,14 @@ public class StreamApiTest {
             "15-Mar-2021 zakaz qilingan produktlarni o'rtacha narxini hisoblang")
     public void exercise9() {
         double expected = solution9();
+        double orders = orderRepo.findAll()
+                .stream()
+                .filter(order -> order.getOrderDate().isEqual(LocalDate.of(2021,3,15)))
+                .map(Order::getProducts)
+                .flatMap(Collection::stream)
+                .mapToDouble(Product::getPrice)
+                .average().getAsDouble();
+        Assertions.assertEquals(expected,orders);
         // yordam: birinchi shu sanadagi hamma orderni olib
         // keyn har bir orderni produktlarini listga yiging
         // keyn narximi stream average bilan hisoblang
@@ -165,12 +174,12 @@ public class StreamApiTest {
             "Feb 2021 zakaz qilingan produktlar narxini hisoblang")
     public void exercise8() {
         double expected = solution8();
-        List<Order> orders = (List<Order>) orderRepo.findAll()
+        double orders = orderRepo.findAll()
                 .stream()
                 .filter(order -> order.getOrderDate().isBefore(LocalDate.of(2021,2,1)))
                 .filter(order -> order.getOrderDate().isBefore(LocalDate.of(2021,3,1)))
                 .map(order -> order.getProducts().stream()
-                        .mapToDouble(Product::getPrice).sum());
+                        .mapToDouble(Product::getPrice).sum()).count();
         // yordam: birinchi shu sanadagi hamma orderni olib
         // keyn har bir orderni produktlarini listga yiging
         // keyn narximi stream sum bilan hisoblang
@@ -187,7 +196,7 @@ public class StreamApiTest {
                 .filter(product -> product.getCategory().equalsIgnoreCase("Books"))
                 .mapToDouble(Product::getPrice)
                 .summaryStatistics();
-
+        Assertions.assertEquals(expected,statistics);
         // yordam: produktni kategoriya boyicha filter qiling
         // keyn streamdan DoubleStreamga o'ting va
         // summary statisticsni chiqaring
@@ -199,6 +208,9 @@ public class StreamApiTest {
             "15-Mar-2021 zakaz qilingan produktlarni oling")
     public void exercise7() {
         List<Product> expected = solution7();
+        List <Product> products = (List<Product>) productRepo.findAll()
+                .stream().filter(product -> product.getOrders().equals(LocalDate.of(2021,3,15)))
+                .collect(Collectors.toSet());
         // yordam (murakkamroq): birinchi shu sanadagi orderlarni olin
         // keyn har bir orderga tegishli produktni
         // olish kerak
